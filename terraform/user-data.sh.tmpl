@@ -7,21 +7,21 @@
   && sudo mv apache-tomcat-8.5.79/* /opt/tomcat/ \
   && sudo chown -R www-data:www-data /opt/tomcat/ \
   && sudo chmod -R 755 /opt/tomcat/ \
-  && sudo echo "<!-- user manager can access only manager section -->
+  && sudo sh -c "cat >>/opt/tomcat/conf/tomcat-users.xml" <<-EOF
+  <!-- user manager can access only manager section -->
   <role rolename="manager-gui" />
   <user username="manager" password="x5bnsu6f" roles="manager-gui" />
   <!-- user admin can access manager and admin section both -->
   <role rolename="admin-gui" />
   <user username="admin" password="L1x853J6#" roles="manager-gui,admin-gui" />
   <!--
-  " >> /opt/tomcat/conf/tomcat-users.xml \
-  && sudo sed -i 's/ <Valve className="org.apache.catalina.valves.RemoteAddrValve"
-         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /> /<!--<Valve className="org.apache.catalina.valves.RemoteAddrValve"
-         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /> -->/g' /opt/tomcat/webapps/manager/META-INF/context.xml \
-  && sudo sed -i 's/ <Valve className="org.apache.catalina.valves.RemoteAddrValve"
-         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /> /<!--<Valve className="org.apache.catalina.valves.RemoteAddrValve"
-         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /> -->/g' /opt/tomcat/webapps/host-manager/META-INF/context.xml \
-  && sudo echo "[Unit]
+EOF \
+  && sudo sed -i '21s/<Valve className="org.apache.catalina.valves.RemoteAddrValve"/<!--<Valve className="org.apache.catalina.valves.RemoteAddrValve"/' /opt/tomcat/webapps/manager/META-INF/context.xml \
+  && sudo sed -i '22s/>/> -->/' /opt/tomcat/webapps/manager/META-INF/context.xml \
+  && sudo sed -i '21s/<Valve className="org.apache.catalina.valves.RemoteAddrValve"/<!--<Valve className="org.apache.catalina.valves.RemoteAddrValve"/' /opt/tomcat/webapps/host-manager/META-INF/context.xml \
+  && sudo sed -i '22s/>/> -->/' /opt/tomcat/webapps/host-manager/META-INF/context.xml \
+  && sudo sh -c "cat >> /etc/systemd/system/tomcat.service" <<-EOF
+  [Unit]
   Description=Tomcat
   After=network.target
 
@@ -42,7 +42,8 @@
   ExecStop=/opt/tomcat/bin/shutdown.sh
 
   [Install]
-  WantedBy=multi-user.target" >> /etc/systemd/system/tomcat.service \
+  WantedBy=multi-user.target"
+EOF \
   && sudo systemctl daemon-reload && sudo systemctl start tomcat && sudo systemctl enable tomcat \
   && git clone https://github.com/makschihin/retr_geocity.git \
   && cd retr_geocity/ \
