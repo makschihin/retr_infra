@@ -1,9 +1,53 @@
 #!/bin/bash
   sudo apt update -y \
-  && sudo apt install git maven openjdk-8-jdk -y \
-  && git clone https://github.com/makschihin/petclinic-tests.git \
-  && cd Geocit134/ \
+  && sudo apt install git maven openjdk-11-jdk -y \
+  && wget https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.79/bin/apache-tomcat-8.5.79.tar.gz \
+  && sudo tar xzvf apache-tomcat-8.5.79.tar.gz \
+  && sudo mkdir /opt/tomcat/ \
+  && sudo mv apache-tomcat-8.5.79/* /opt/tomcat/ \
+  && sudo chown -R www-data:www-data /opt/tomcat/ \
+  && sudo chmod -R 755 /opt/tomcat/ \
+  && sudo echo "<!-- user manager can access only manager section -->
+  <role rolename="manager-gui" />
+  <user username="manager" password="x5bnsu6f" roles="manager-gui" />
+  <!-- user admin can access manager and admin section both -->
+  <role rolename="admin-gui" />
+  <user username="admin" password="L1x853J6#" roles="manager-gui,admin-gui" />
+  <!--
+  " >> /opt/tomcat/conf/tomcat-users.xml \
+  && sudo sed -i 's/ <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /> /<!--<Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /> -->/g' /opt/tomcat/webapps/manager/META-INF/context.xml \
+  && sudo sed -i 's/ <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /> /<!--<Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /> -->/g' /opt/tomcat/webapps/host-manager/META-INF/context.xml \
+  && sudo echo "[Unit]
+  Description=Tomcat
+  After=network.target
+
+  [Service]
+  Type=forking
+
+  User=root
+  Group=root
+
+  Environment="JAVA_HOME=/usr/lib/jvm/java-1.11.0-openjdk-amd64"
+  Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom"
+  Environment="CATALINA_BASE=/opt/tomcat"
+  Environment="CATALINA_HOME=/opt/tomcat"
+  Environment="CATALINA_PID=/opt/tomcat/temp/tomcat.pid"
+  Environment="CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC"
+
+  ExecStart=/opt/tomcat/bin/startup.sh
+  ExecStop=/opt/tomcat/bin/shutdown.sh
+
+  [Install]
+  WantedBy=multi-user.target" >> /etc/systemd/system/tomcat.service \
+  && sudo systemctl daemon-reload && sudo systemctl start tomcat && sudo systemctl enable tomcat \
+  && git clone https://github.com/makschihin/retr_geocity.git \
+  && cd retr_geocity/ \
   && echo ${db_endpoint} > /home/ubuntu/db_addr.txt \
-  && sudo sed -i 's/localhost/${db_endpoint}/g' src/main/resources/application.properties \
+  && sudo sed -i 's/localhost:5432/${db_endpoint}:5432/g' src/main/resources/application.properties \
+  && sudo sed -i 's/35.204.28.238/${db_endpoint}/g' src/main/resources/application.properties \
   && mvn install && sudo mv target/citizen.war /opt/tomcat/webapps/ && sudo /opt/tomcat/webapps/bin/startup.sh \
   && sudo echo "hello" >> /home/ubuntu/hello.txt
